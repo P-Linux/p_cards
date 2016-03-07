@@ -37,7 +37,7 @@ logdir /var/log/pkgbuild
 
 # locales
 
-locale fr
+locale en
 
 # base system
 

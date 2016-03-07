@@ -7,12 +7,7 @@ DIRTEST = tests
 
 DIRSCRIPTS = scripts
 
-DIRFLTK = fltk
-
 .PHONY: cards
-
-flcards:
-	$(MAKE) -C $(DIRFLTK) flcards
 
 libs:
 	$(MAKE) -C $(DIRSRC) libs
@@ -56,13 +51,13 @@ cards:
 
 man:
 	$(MAKE) -C $(DIRMAN) man
+	
 clean:
 
 	$(MAKE) -C $(DIRSRC) clean
 	$(MAKE) -C $(DIRSCRIPTS) clean
 	$(MAKE) -C $(DIRMAN) clean
 	$(MAKE) -C $(DIRTEST) clean
-	$(MAKE) -C $(DIRFLTK) clean
 
 dist: distclean
 

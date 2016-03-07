@@ -1,8 +1,9 @@
 ## TODO
 
-### Add Option to define: no_unpack per source entry
+### Add extraction support for: debian dep files
 
-[comment](https://github.com/NuTyX/cards/issues/48#issuecomment-191182092)
+see http://downloads.nutyx.org/8.0/x86_64/gui-extra/google-chrome/Pkgfile
+
 
 ### pkgmk.in supports now gettext translation files
 
@@ -14,6 +15,7 @@ Maybe suggestion:
     * export TEXTDOMAIN='pkgmk'
     * export TEXTDOMAINDIR='/etc/cards/pkgmk/locale'
 
+
 ### Add documentation / man page info for PKGMK variables
 
 Add documentation / man page info for ALL PKGMK options.
@@ -24,7 +26,8 @@ Split them into 2 categories:
 * PKGMK INTERNAL VARIABLES: which should not be set in the `pkgmk.conf` but might be useful for developers.
     e.g. Pkgfiles
 
-    * add info that PKGMK_ARCH variable exists: **currently I found 85 occurencies of `uname -m` in the official Pkgfiles.
+    * add info that PKGMK_ARCH variable exists: **currently I found 85 occurencies of `uname -m` in the 
+        official Pkgfiles.
 
 
 ### Unify code style in `pkgmk.in`: backticks to parentheses style
@@ -43,13 +46,11 @@ quoted string -- except $, ` (backquote), and \ (escape).
 ```
 
 
-### Adjust documentation to include: ARCH i686
-
-[see issue](https://github.com/NuTyX/cards/issues/35)
-
-
 ### Re-write Documentation
 
+* `pkgmk.in` rewrite info *Pkgfile: source (array)* (the big block at the top of the file)
+    in the documentation and remove it from the `pkgmk.in` file
+    
 
 ### CHECK: PKGMK.CONF VARIABLES: which can be set in the `pkgmk.conf`
 
@@ -57,15 +58,3 @@ quoted string -- except $, ` (backquote), and \ (escape).
 ### DIVERSE TODO
 
 * Maybe: add Pkgfile syntax check for source=() array
-
-* improve the pkginfo --runtimedepfiles functionnality
-
-* Update Copyright to include: Johannes Winkelmann and Judd Vinet  man pages etc..
-
-* PKGMK_VCS_HOLDVER: Decide maybe change it to hold the last set version
-
-    Currently: When using VCS sources any currently checked out source will not be updated to the latest revision.
-
-* `pkgmk.in` rewrite info *Pkgfile: source (array)* (the big block at the top of the file)
-    in the documentation and remove it from the `pkgmk.in` file
-    

@@ -112,11 +112,11 @@ Possible values: '(lib devel man doc service)'
 \fBPKGMK_LOCALES=('STRING1' .. 'STRINGN')
 If set, pkgmk will try to produced the specified locales. Each locale is define in this variable.
 .br
-Default: '(fr)'
+Default: '(en)'
 .SH SEE ALSO
 pkgmk(8)
 .SH COPYRIGHT
-pkgmk (pkgutils) is Copyright (c) 2000-2005 Per Liden and Copyright (c) 2006-2013 CRUX team (http://crux.nu).
-pkgmk (cards) is Copyright (c)  2013-2016 Thierry Nuttens NuTyX team (http://www.nutyx.org).
-pkgmk (cards) is licensed through the GNU General Public License.
-Read the COPYING file for the complete license.
+This program is part of the *p_cards package* Copyright (c) 2016, **peter1000** <https://github.com/peter1000>  
+which is licensed under the GNU General Public License.
+*p_cards* includes code derived from other open source projects, which have their own licenses:
+Read the LICENSE.md file for the detailed license information.
