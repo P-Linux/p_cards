@@ -8,7 +8,11 @@ repo_url: https://github.com/P-NuTyX/p_cards//
 
 pages:
 - Home: 'index.md'
-
+- Utilities:
+    - Cards: utilities/cards.md
+    - Cards.conf: utilities/cards.conf.md
+    - Pkgmk.conf: utilities/pkgmk.conf
+    - Pkgadd.conf: utilities/pkgadd.conf
 - About:
     - Readme: about/readme.md
     - License: about/license.md

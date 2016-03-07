@@ -1,6 +1,6 @@
 ## p_cards
 
-Package Management Utilities for NuTyX-Linux (development repo of peter1000)
+Package Management Utilities for NuTyX-Linux (development repository of peter1000)
 
 
 ### Web Presence
