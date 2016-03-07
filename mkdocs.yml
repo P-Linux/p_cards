@@ -1,10 +1,10 @@
 site_name: p_cards
-site_url: https://p-nutyx.github.io/p_cards//
+site_url: https://p-nutyx.github.io/p_cards/
 site_description: Package Management Utilities for NuTyX-Linux (development repo of peter1000)
 site_author: peter1000
 #site_favicon: images/p_cards_favicon.ico
 
-repo_url: https://github.com/P-NuTyX/p_cards//
+repo_url: https://github.com/P-NuTyX/p_cards/
 
 pages:
 - Home: 'index.md'
