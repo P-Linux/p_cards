@@ -14,3 +14,7 @@ libcards*
 ChangeLog
 archives
 tests/test
+
+# Mkdocs
+site/
+
