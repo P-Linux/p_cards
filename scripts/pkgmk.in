@@ -53,6 +53,24 @@
 #
 #       * Extraction of individual source files can be skipped by prefixing the entry with `NOEXTRACT::`
 #
+#   RPM Source files
+#
+#   rmp files will also automatically extracted: but usually they will extract to a `.spec` file and another `.tar.xz`
+#   file. If the basename without extention is the same as the original rmp the extracted `.tar.xz` file will be also
+#   extracted. To achive this it is usually recommendt to use the rename option below.
+#
+#   example case:
+#
+#       name=libx86emu
+#       version=1.6
+#       release=1
+#       source=(libx86emu-1.6.rpm::http://download.opensuse.org/source/factory/repo/oss/suse/src/$name-$version-1.1.src.rpm)
+#
+#       RESULT in the $SRC
+#           * libx86emu.spec        The extracted Spec file
+#           * libx86emu-1.6.tar.xz  The extracted `tar.xz` file
+#           * libx86emu-1.6         FINAL source folder (the content of libx86emu-1.6.tar.xz)
+#
 # It is also possible to change the name of the downloaded file (except for Local source files), which is helpful with
 # weird URLs and for handling multiple source files with the same name.
 #
@@ -964,6 +982,8 @@ extract_file() {
 				xz) cmd="xz" ;;
 				*) return;;
 			esac ;;
+        *application/x-rpm)
+            cmd="bsdtar" ;;
 		*)
 			# See if bsdtar can recognize the file
 			if bsdtar -tf "$FINAL_SRCPATH" -q '*' &>/dev/null; then
@@ -977,7 +997,19 @@ extract_file() {
 	local ret=0
     msg2 "$(gettext "Extracting file with (%s): <%s>")" "$cmd" "$FINAL_SRCPATH"
 	if [[ $cmd == "bsdtar" ]]; then
-		$cmd -p -C $SRC -xf "$FINAL_SRCPATH"  || ret=$?
+        $cmd -p -C $SRC -xf "$FINAL_SRCPATH"  || ret=$?
+        if (( ret )); then
+            abort_check_keepwork "Failed to extract file: <$FINAL_SRCPATH>. SOURCE: <$NETSRC>"
+        fi
+        # try i there is xz file
+        if [[ "$file_type" == *application/x-rpm* ]]; then
+            # expected file is same file name rpm just with tar.xz extention
+            # if needed use the fileranme option for the source.
+            local TMP_RPM_XZ_FILE="$SRC/${FINAL_SRCNAME%.*}.tar.xz"
+            if [[ -f "$TMP_RPM_XZ_FILE" ]]; then
+                bsdtar -p -C "$SRC" -xf "$TMP_RPM_XZ_FILE" || ret=$?
+            fi
+        fi
 	else
 		rm -f -- "$SRC/${FINAL_SRCNAME%.*}"
 		$cmd -dcf "$FINAL_SRCPATH" > "$SRC/${FINAL_SRCNAME%.*}" || ret=$?
