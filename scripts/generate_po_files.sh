@@ -1,11 +1,11 @@
 #!/bin/bash
-#
-#### generate_po_files.sh   Written by **peter1000** (for gettext v.0.19.7) contributed to NuTyX-Linux
 
-
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   Generate and update `.po` files: **peter1000**
+#
+#   IMPORTANT: CONFIGURATION at the bottom of the file
+#
 #
 #   1. This will extract an original language (as written in the source file) .pot file
 #
@@ -21,7 +21,7 @@
 #           * the header tags should be updated and the messages should be translated
 #
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #                                     >>>     Filling in the: Header Entry     <<<
 #
@@ -35,58 +35,14 @@
 #
 #   for more info see: <https://www.gnu.org/software/gettext/manual/html_node/Header-Entry.html>
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
-THIS_SCRIPT_PATH="$(readlink -f "$(type -P $0 || echo $0)")"
-THIS_SCRIPT_DIR="$(dirname "$THIS_SCRIPT_PATH")"
 
-#**********************************************************************************************************************
-#
-#   DEFAULT CONFIGURATION
-#
+#************************************************************************************************************************
+#   DIVERSE FUNCTION
+#************************************************************************************************************************
 
-# NOTE: UTF-8 language/locale are expected
-LANGUAGES=(
-    'de_DE.UTF-8'
-    'en_US.UTF-8'
-    'fr_FR.UTF-8'
-    'pt_BR.UTF-8'
-)
-
-PACKAGE_NAME='cards'
-
-SRCFILE_PATH="$THIS_SCRIPT_DIR/pkgmk.in"
-
-PO_DIR="$THIS_SCRIPT_DIR/po"
-COPYRIGHT_START_YEAR="2016"
-COPYRIGHT_HOLDER="NuTyX Team"
-PROJECT_URL="https://github.com/NuTyX/cards"
-
-#
-#   END CONFIGURE
-#
-#**********************************************************************************************************************
-
-ALL_OFF="\e[0m"
-BOLD="\e[1m"
-GREEN="${BOLD}\e[32m"
-
-info1() {
-	local mesg=$1; shift
-	printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&1
-}
-
-info2() {
-	local mesg=$1; shift
-	printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&1
-}
-
-get_basename() {
-    printf "%s\n" "${1##*/}"
-}
-
-# Generate original .pot file from source: `SRCFILE_PATH`
-# Writes the output to PO_DIR/FILE_NAME.pot
+# Generate original .pot file from source: `SRCFILE_PATH`. Writes the output to PO_DIR/FILE_NAME.pot
 generate_pot_file() {
     local POT_FILE_PATH="$1"
     local SRCFILE_BASENAME="$2"
@@ -96,7 +52,7 @@ generate_pot_file() {
     # remove any existing
     rm -f $POT_FILE_PATH
 
-    info1 "$(gettext "Generating original 'pot' file...SOURCE: <%s>")" "$SRCFILE_BASENAME"
+    msg "$(gettext "Generating original 'pot' file...SOURCE: <%s>")" "$SRCFILE_BASENAME"
 
 	pushd "$SRCFILE_DIR" &>/dev/null
     xgettext \
@@ -108,7 +64,7 @@ generate_pot_file() {
         --from-code="UTF-8" \
         --force-po  \
         --no-wrap   \
-        "$SRCFILE_BASENAME"
+        "$SRCFILE_BASENAME" 
 
     # update the pot header
     sed -i.bak "
@@ -121,7 +77,7 @@ generate_pot_file() {
 
     rm -f "$POT_FILE_PATH.bak"
 
-    info2 "$(gettext "  >>> PATH: <%s>")" "$POT_FILE_PATH"
+    plain2 "$(gettext "PATH: <%s>")" "$POT_FILE_PATH"
 
     popd &>/dev/null
 }
@@ -136,13 +92,13 @@ main() {
 
     generate_pot_file "$POT_FILE_PATH" "$SRCFILE_BASENAME"
 
-    info1 "$(gettext "Generating all locale 'po' files...")"
+    msg "$(gettext "Generating all locale 'po' files...")"
 
     for locale in "${LANGUAGES[@]}"; do
         LOCALE_PO_DIR="$PO_DIR/$locale/LC_MESSAGES"
         mkdir -p "${LOCALE_PO_DIR}"
 
-        info1 "$(gettext "Proccessing locale <%s>...")" "$locale"
+        msg_i "$(gettext "Proccessing locale <%s>...")" "$locale"
 
         EMPTY_PO_PATH="$LOCALE_PO_DIR/${SRCFILE_BASENAME_NO_EXT}_empty.po"
         FINAL_PO_PATH="$LOCALE_PO_DIR/${SRCFILE_BASENAME_NO_EXT}.po"
@@ -175,6 +131,53 @@ main() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
+#   MAIN
+#************************************************************************************************************************
+
+if [ -z "$BASH" ]; then printf "\nERROR SHELL: '%s' SCRIPT needs 'bash'\n\n" "$(ps -p $$ -ocomm=)"; exit 1; fi
+THIS_SCRIPT_PATH="$(readlink -f "$(type -P $0 || echo $0)")"
+THIS_SCRIPT_DIR="$(dirname "$THIS_SCRIPT_PATH")"
+source $THIS_SCRIPT_DIR/p_linux_common_func.sh
+trap "interrupted" SIGHUP SIGINT SIGQUIT SIGTERM
+msg_format
+check_have_gettext  $THIS_SCRIPT_PATH
+
+
+#************************************************************************************************************************
+#
+#   CONFIGURATION
+#
+
+# NOTE: UTF-8 language/locale are expected
+LANGUAGES=(
+    "de_DE.UTF-8"
+    "en_US.UTF-8"
+    "pt_BR.UTF-8"
+)
+
+PACKAGE_NAME="p_cards"
+
+SRCFILE_PATH="$THIS_SCRIPT_DIR/pkgmk.in"
+
+PO_DIR="$THIS_SCRIPT_DIR/po"
+COPYRIGHT_START_YEAR="2016"
+COPYRIGHT_HOLDER="peter1000"
+PROJECT_URL="https://github.com/P-Linux/p_cards"
+
+#
+#   END CONFIGURE
+#
+#************************************************************************************************************************
+
+
+color_header $GREEN_MSG "$(gettext "'Generating Translation Files'...")"
+
+get_user_permission_to_run
 
 main
+
+
+#************************************************************************************************************************
+# End of file
+#************************************************************************************************************************

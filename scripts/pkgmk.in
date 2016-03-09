@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #           CODE INDEX: TIP: use search to jump there
 #
 #   GENERAL INFO
@@ -27,16 +27,17 @@
 #       GENERAL - package functions
 #   REPO FUNCTIONS
 #   MAIN FUNCTIONS
-#   DIVERSES
+#   SOURCE COMMON_FUNC.SH
+#       OVERRIDING SOURCED Functions
 #   VARIABLES
-#       READ-ONLY VARIABLES
+#       PKGMK READ-ONLY VARIABLES
 #       PKGMK.CONF VARIABLES: which can be set in the `pkgmk.conf`
 #       PKGMK INTERNAL VARIABLES: which should not be set in the `pkgmk.conf`
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 
-##**********************************************************************************************************************
+##************************************************************************************************************************
 #
 #                               Pkgfile: source (array): TODO rewrite this in the documentation and remove it here
 #
@@ -53,23 +54,10 @@
 #
 #       * Extraction of individual source files can be skipped by prefixing the entry with `NOEXTRACT::`
 #
-#   RPM Source files
+#   RPM & DEB files
 #
-#   rmp files will also automatically extracted: but usually they will extract to a `.spec` file and another `.tar.xz`
-#   file. If the basename without extention is the same as the original rmp the extracted `.tar.xz` file will be also
-#   extracted. To achive this it is usually recommendt to use the rename option below.
+#   rmp & dep files will be automatically extracted: see exception above
 #
-#   example case:
-#
-#       name=libx86emu
-#       version=1.6
-#       release=1
-#       source=(libx86emu-1.6.rpm::http://download.opensuse.org/source/factory/repo/oss/suse/src/$name-$version-1.1.src.rpm)
-#
-#       RESULT in the $SRC
-#           * libx86emu.spec        The extracted Spec file
-#           * libx86emu-1.6.tar.xz  The extracted `tar.xz` file
-#           * libx86emu-1.6         FINAL source folder (the content of libx86emu-1.6.tar.xz)
 #
 # It is also possible to change the name of the downloaded file (except for Local source files), which is helpful with
 # weird URLs and for handling multiple source files with the same name.
@@ -194,12 +182,14 @@
 # source=(sftp://home1.cyberciti.biz/~/docs/resume.pdf)
 # source=(ftps://ftp.host.com/ )
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   MESSAGES FUNCTIONS - functions for outputting messages
+#
+#
 #
 # USAGE EXAMPLE: ALL messages should be in the format:
 #
@@ -207,112 +197,40 @@
 #   plain "$(gettext "The files path is: %s")"  "$FILEPATH"
 #   plain "$(gettext "Source file <%s>.")" "$(get_filename "$1")"
 #
-#**********************************************************************************************************************
-
-colorize() {
-	# prefer terminal safe colored and bold text when tput is supported
-	if tput setaf 0 &>/dev/null; then
-		ALL_OFF_MSG="$(tput sgr0)"
-		BOLD_MSG="$(tput bold)"
-		RED_MSG="${BOLD_MSG}$(tput setaf 1)"
-		GREEN_MSG="${BOLD_MSG}$(tput setaf 2)"
-		YELLOW_MSG="${BOLD_MSG}$(tput setaf 3)"
-		BLUE_MSG="${BOLD_MSG}$(tput setaf 4)"
-		MAGENTA_MSG="${BOLD_MSG}$(tput setaf 5)"
-	else
-		ALL_OFF_MSG="\e[0m"
-		BOLD_MSG="\e[1m"
-        RED_MSG="${BOLD_MSG}\e[31m"
-		GREEN_MSG="${BOLD_MSG}\e[32m"
-		YELLOW_MSG="${BOLD_MSG}\e[33m"
-		BLUE_MSG="${BOLD_MSG}\e[34m"
-		MAGENTA_MSG="${BOLD_MSG}\e[35m"
-	fi
-	readonly ALL_OFF_MSG BOLD_MSG BLUE_MSG GREEN_MSG RED_MSG YELLOW_MSG MAGENTA_MSG
-}
-
-plain() {
-	local mesg=$1; shift
-	printf "${BOLD_MSG}==> ${mesg}${ALL_OFF_MSG}\n" "$@" >&1
-}
-
-plain2() {
-	local mesg=$1; shift
-	printf "${BOLD_MSG}    ${mesg}${ALL_OFF_MSG}\n" "$@" >&1
-}
-
-msg() {
-	local mesg=$1; shift
-	printf "${GREEN_MSG}==>${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n" "$@" >&1
-}
-
-msg2() {
-	local mesg=$1; shift
-	printf "${BLUE_MSG}  ->${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n" "$@" >&1
-}
-
-warning() {
-	local mesg=$1; shift
-	printf "${YELLOW_MSG}==> $(gettext "WARNING:")${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n" "$@" >&2
-}
-
-error() {
-	local mesg=$1; shift
-	printf "${RED_MSG}==> $(gettext "ERROR:")${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n" "$@" >&2
-}
+#************************************************************************************************************************
 
 
 # $1 must be in the format: "PART_TO_BE_CHECKED|Message|ErrorCode
 #   e.g.:  check_abort "ERR_ABORT|The protocol: <$PROTOCOL> is not supported."
 check_abort() {
 	local delimstr=$1; shift
-    local PART_TO_BE_CHECKED="$(get_str_part "$delimstr" 1)";
-    local mesg="$(get_str_part "$delimstr" 2)";
+    local PART_TO_BE_CHECKED="$(get_str_part "$delimstr" 1)"
+    local MESG="$(get_str_part "$delimstr" 2)"
     if [ "$PART_TO_BE_CHECKED" == "ERR_ABORT" ]; then
-        printf "${MAGENTA_MSG}\n====> $(gettext "ABORTING....\n")${ALL_OFF_MSG}" >&2
-        printf "${BLUE_MSG}    ->${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n\n" "$@" >&2
-        exit 1
+        abort "$(gettext "%s")" "$MESG"
     fi
-}
-
-abort() {
-	local mesg=$1; shift
-    printf "${MAGENTA_MSG}\n====> $(gettext "ABORTING....\n")${ALL_OFF_MSG}" >&2
-    printf "${BLUE_MSG}    ->${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n\n" "$@" >&2
-    exit 1
 }
 
 # also checks if we keep `PKGMK_WORK_DIR`
 abort_check_keepwork() {
-    local mesg=$1; shift
+    local MESG=$1; shift
     if [ "$PKGMK_KEEP_WORK" == "no" ]; then
         rm -rf $PKGMK_WORK_DIR
     fi
-    local mesg2="$(gettext "Building failed: <%s>")" "$TARGET"
-    printf "${RED_MSG}==> $(gettext "ERROR:")${ALL_OFF_MSG}${BOLD_MSG} ${mesg2}${ALL_OFF_MSG}\n" "$@" >&2
-    printf "${MAGENTA_MSG}\n====> $(gettext "ABORTING....\n")${ALL_OFF_MSG}" >&2
-    printf "${BLUE_MSG}    ->${ALL_OFF_MSG}${BOLD_MSG} ${mesg}${ALL_OFF_MSG}\n" "$@" >&2
-    exit 1
-}
-
-interrupted() {
-	if [ "$PKGMK_KEEP_WORK" == "no" ]; then
-		rm -rf $PKGMK_WORK_DIR
-	fi
-    printf "${RED_MSG}\n==> $(gettext "ERROR:")${ALL_OFF_MSG}${BOLD_MSG} Interrupted${ALL_OFF_MSG}\n" >&2
-	exit 1
+    error "$(gettext "Building failed: <$TARGET>")"
+    abort "$(gettext "%s")" "$MESG"
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   GENERAL FUNCTIONS - HELPERS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   FUNCTION RELATED: helpers to check, run other functions
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 have_function() {
 	declare -f "$1" >/dev/null
@@ -369,9 +287,9 @@ run_function() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   GENERAL - helper functions
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 # returns a part of a string: usually used for multiple return values from functions.
 #   Delimiter is |    $1 - return result string: Quoted  $2 - number of part to be returned
@@ -391,7 +309,7 @@ dir_isempty() {
 
 cd_safe() {
 	if ! cd "$1"; then
-        abort "Failed to change to directory $1"
+        abort "$(gettext "Failed to change to directory: <%s>")" "$1"
 	fi
 }
 
@@ -503,7 +421,7 @@ get_final_srcname() {
 		git|svn|hg|bzr)
 			FINAL_SRCNAME="${NETSRC%%#*}"
 			FINAL_SRCNAME="${FINAL_SRCNAME%/}"
-			FINAL_SRCNAME="${FINAL_SRCNAME##*/}"
+			FINAL_SRCNAME=$(get_basename $FINAL_SRCNAME)
 			if [[ "$PROTOCOL" == "bzr" ]]; then
 				FINAL_SRCNAME="${FINAL_SRCNAME#*lp:}"
 			fi
@@ -513,7 +431,7 @@ get_final_srcname() {
 			;;
 		*)
 			# if it is just an URL, we only keep the last component
-			FINAL_SRCNAME="${NETSRC##*/}"
+			FINAL_SRCNAME=$(get_basename $NETSRC)
 			;;
 	esac
     printf "%s\n" "${FINAL_SRCNAME}"
@@ -586,11 +504,11 @@ remove_source() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   DOWNLOAD SOURCE FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_source() {
     local NETSRC PROTOCOL FINAL_SRCNAME FINAL_SRCPATH ORIG_URL
@@ -636,9 +554,9 @@ download_source() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   FILES - function for handling the *download* of `File` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_file() {
     local DOWNLOAD_OPTS RESUME_OPTS RESUME_CMD
@@ -651,11 +569,11 @@ download_file() {
 
     local PROTOCOL=$2
     local ORIG_URL=$3
-    local BASENAME="${ORIG_URL##*/}"
+    local BASENAME=$(get_basename $ORIG_URL)
     FINAL_SRCPATH_PARTIAL="$FINAL_SRCPATH.partial"
 
     msg "$(gettext "Downloading file URL: <%s>")" "$ORIG_URL"
-    msg2 "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
+    msg_i "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
 	if [ ! "`type -p ${PKGMK_DOWNLOAD_PROG}`" ]; then
         abort "$(gettext "Command <%s> not found.")" "$PKGMK_DOWNLOAD_PROG"
 	fi
@@ -688,7 +606,7 @@ download_file() {
 	esac
 
     if [ -f "$FINAL_SRCPATH_PARTIAL" ]; then
-        plain2 "$(gettext "Partial download found, trying to resume...")"
+        plain_i "$(gettext "Partial download found, trying to resume...")"
         RESUME_OPTS="$RESUME_CMD"
     fi
 
@@ -707,7 +625,7 @@ download_file() {
             $PKGMK_DOWNLOAD_PROG $DOWNLOAD_OPTS $RESUME_OPTS $ORIG_URL
             ret=$?
             if [ $ret != 0 ] && [ "$RESUME_OPTS" ]; then
-                plain2 "$(gettext "Partial download failed, restarting download...")"
+                plain_i "$(gettext "Partial download failed, restarting download...")"
                 rm -f -- "$FINAL_SRCPATH_PARTIAL"
                 RESUME_OPTS=""
             else
@@ -723,9 +641,9 @@ download_file() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   GIT - function for handling the *download* of `Git` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_git() {
     local url
@@ -737,13 +655,13 @@ download_git() {
 	[[ -z "$FINAL_SRCPATH" ]] && FINAL_SRCPATH="$PKGMK_SOURCE_DIR/$FINAL_SRCNAME"
 
     msg "$(gettext "Downloading git into: <%s>")" "$FINAL_SRCNAME"
-    msg2 "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
+    msg_i "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
 
 	url=${ORIG_URL#git+}
 	url=${url%%#*}
 
 	if [[ ! -d "$FINAL_SRCPATH" ]] || dir_isempty "$FINAL_SRCPATH" ; then
-        plain2 "$(gettext "Cloning git repo <%s>")" "$REPO"
+        plain_i "$(gettext "Cloning git repo <%s>")" "$REPO"
 		if ! git clone $PKGMK_VCS_GIT_OPTS --mirror "$url" "$FINAL_SRCPATH"; then
 			abort_check_keepwork "Failure while downloading git repo: <$REPO> SOURCE: <$NETSRC>"
 		fi
@@ -753,7 +671,7 @@ download_git() {
 		if [[ "$url" != "$(git config --get remote.origin.url)" ]] ; then
 			abort_check_keepwork "<$FINAL_SRCPATH> is not a clone of <$url> SOURCE: <$NETSRC>"
         fi
-		plain2 "$(gettext "Updating git repo <%s>")" "$REPO"
+		plain_i "$(gettext "Updating git repo <%s>")" "$REPO"
 		if ! git fetch --all -p $PKGMK_VCS_GIT_OPTS; then
 			# only warn on failure to allow offline builds
             warning "$(gettext "Failure while updating git repo <%s>")" "$REPO"
@@ -762,9 +680,9 @@ download_git() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   SVN - function for handling the *download* of `Subversion` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_svn() {
     local url
@@ -781,7 +699,7 @@ download_svn() {
 	[[ -z "$FINAL_SRCPATH" ]] && FINAL_SRCPATH="$PKGMK_SOURCE_DIR/$FINAL_SRCNAME"
 
     msg "$(gettext "Downloading svn into: <%s>")" "$FINAL_SRCNAME"
-    msg2 "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
+    msg_i "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
 
 	if [[ "$url" != svn+ssh* ]]; then
 		url=${url#svn+}
@@ -800,14 +718,14 @@ download_svn() {
 	fi
 
 	if [[ ! -d "$FINAL_SRCPATH" ]] || dir_isempty "$FINAL_SRCPATH" ; then
-        plain2 "$(gettext "Cloning svn repo <%s>")" "$REPO"
+        plain_i "$(gettext "Cloning svn repo <%s>")" "$REPO"
 		mkdir -p "$FINAL_SRCPATH/.makepkg"
 		if ! svn checkout -r ${ref} $PKGMK_VCS_SVN_OPTS --config-dir "$FINAL_SRCPATH/.makepkg" "$url" "$FINAL_SRCPATH";
             then
 			abort_check_keepwork "Failure while downloading svn repo: <$REPO> SOURCE: <$ORIG_URL>"
 		fi
 	elif [ "$PKGMK_VCS_HOLDVER" == "no" ]; then
-        plain2 "$(gettext "Updating svn repo <%s>")" "$REPO"
+        plain_i "$(gettext "Updating svn repo <%s>")" "$REPO"
 		cd_safe "$FINAL_SRCPATH"
 		if ! svn update -r ${ref} $PKGMK_VCS_SVN_OPTS; then
 			# only warn on failure to allow offline builds
@@ -817,9 +735,9 @@ download_svn() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   HG - function for handling the *download* of `Mercurial` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_hg() {
     local url
@@ -831,18 +749,18 @@ download_hg() {
 	[[ -z "$FINAL_SRCPATH" ]] && FINAL_SRCPATH="$PKGMK_SOURCE_DIR/$FINAL_SRCNAME"
 
     msg "$(gettext "Downloading hg into: <%s>")" "$FINAL_SRCNAME"
-    msg2 "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
+    msg_i "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
 
 	url=${ORIG_URL#hg+}
 	url=${url%%#*}
 
 	if [[ ! -d "$FINAL_SRCPATH" ]] || dir_isempty "$FINAL_SRCPATH" ; then
-        plain2 "$(gettext "Cloning hg repo <%s>")" "$REPO"
+        plain_i "$(gettext "Cloning hg repo <%s>")" "$REPO"
 		if ! hg clone $PKGMK_VCS_HG_OPTS -U "$url" "$FINAL_SRCPATH"; then
 			abort_check_keepwork "Failure while downloading hg repo: <$REPO> SOURCE: <$NETSRC>"
 		fi
 	elif [ "$PKGMK_VCS_HOLDVER" == "no" ]; then
-		plain2 "$(gettext "Updating hg repo <%s>")" "$REPO"
+		plain_i "$(gettext "Updating hg repo <%s>")" "$REPO"
 		cd_safe "$FINAL_SRCPATH"
 		if ! hg pull $PKGMK_VCS_HG_OPTS; then
 			# only warn on failure to allow offline builds
@@ -852,9 +770,9 @@ download_hg() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   BZR - function for handling the *download* of `Bazaar` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 download_bzr() {
     local NETSRC=$1
@@ -870,15 +788,15 @@ download_bzr() {
 	[[ -z "$FINAL_SRCPATH" ]] && FINAL_SRCPATH="$PKGMK_SOURCE_DIR/$FINAL_SRCNAME"
 
     msg "$(gettext "Downloading bzr into: <%s>")" "$FINAL_SRCNAME"
-    msg2 "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
+    msg_i "$(gettext "FINAL_SRCPATH: <%s>")" "$FINAL_SRCPATH"
 
 	if [[ ! -d "$FINAL_SRCPATH" ]] || dir_isempty "$FINAL_SRCPATH" ; then
-        plain2 "$(gettext "Branching bzr displaylocation <%s>")" "$url"
+        plain_i "$(gettext "Branching bzr displaylocation <%s>")" "$url"
 		if ! bzr branch $PKGMK_VCS_BZR_OPTS "$url" "$FINAL_SRCPATH" --no-tree --use-existing-dir; then
             abort_check_keepwork "Failure while branching bzr displaylocation: <$url> SOURCE: <$NETSRC>"
 		fi
 	elif [ "$PKGMK_VCS_HOLDVER" == "no" ]; then
-        plain2 "$(gettext "Pulling bzr displaylocation <%s>")" "$displaylocation"
+        plain_i "$(gettext "Pulling bzr displaylocation <%s>")" "$displaylocation"
 		cd_safe "$FINAL_SRCPATH"
 		if ! bzr pull $PKGMK_VCS_BZR_OPTS "$url"; then
 			# only warn on failure to allow offline builds
@@ -888,11 +806,11 @@ download_bzr() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   EXTRACT SOURCE FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_source() {
 	local NETSRC PROTOCOL FINAL_SRCNAME FINAL_SRCPATH COMMAND
@@ -939,15 +857,15 @@ extract_source() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   FILES - function for handling the *extraction* of `File` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_only_copy() {
     local FINAL_SRCPATH=$1
     local NETSRC=$2
 
-    msg2 "$(gettext "Copying <%s> to <%s>")" "$FINAL_SRCPATH" "$SRC"
+    msg_i "$(gettext "Copying <%s> to <%s>")" "$FINAL_SRCPATH" "$SRC"
 
     cp -f $FINAL_SRCPATH $SRC
     if [ $? != 0 ]; then
@@ -959,35 +877,35 @@ extract_file() {
     local FINAL_SRCPATH=$1
     local FINAL_SRCNAME=$2
     local NETSRC=$3
-
+	local EXT=${FINAL_SRCPATH##*.}
+	local CMD=''
+    
 	# do not rely on extension for file type
-	local file_type=$(file -bizL "$FINAL_SRCPATH")
-	local ext=${FINAL_SRCPATH##*.}
-	local cmd=''
-	case "$file_type" in
-		*application/x-tar*|*application/zip*|*application/x-zip*|*application/x-cpio*)
-			cmd="bsdtar" ;;
+	local FILE_TYPE=$(file -bizL "$FINAL_SRCPATH")
+
+	case "$FILE_TYPE" in
+		*application/x-tar*|*application/zip*|*application/x-zip*| \
+        *application/x-cpio*|*application/x-rpm*|*application/vnd.debian.binary-package*)
+			CMD="bsdtar" ;;
 		*application/x-gzip*)
-			case "$ext" in
-				gz|z|Z) cmd="gzip" ;;
+			case "$EXT" in
+				gz|z|Z) CMD="gzip" ;;
 				*) return;;
 			esac ;;
 		*application/x-bzip*)
-			case "$ext" in
-				bz2|bz) cmd="bzip2" ;;
+			case "$EXT" in
+				bz2|bz) CMD="bzip2" ;;
 				*) return;;
 			esac ;;
 		*application/x-xz*)
-			case "$ext" in
-				xz) cmd="xz" ;;
+			case "$EXT" in
+				xz) CMD="xz" ;;
 				*) return;;
 			esac ;;
-        *application/x-rpm)
-            cmd="bsdtar" ;;
 		*)
 			# See if bsdtar can recognize the file
 			if bsdtar -tf "$FINAL_SRCPATH" -q '*' &>/dev/null; then
-				cmd="bsdtar"
+				CMD="bsdtar"
 			else
 				extract_only_copy "$FINAL_SRCPATH" "$NETSRC"
                 return 0
@@ -995,24 +913,12 @@ extract_file() {
 	esac
 
 	local ret=0
-    msg2 "$(gettext "Extracting file with (%s): <%s>")" "$cmd" "$FINAL_SRCPATH"
-	if [[ $cmd == "bsdtar" ]]; then
-        $cmd -p -C $SRC -xf "$FINAL_SRCPATH"  || ret=$?
-        if (( ret )); then
-            abort_check_keepwork "Failed to extract file: <$FINAL_SRCPATH>. SOURCE: <$NETSRC>"
-        fi
-        # try i there is xz file
-        if [[ "$file_type" == *application/x-rpm* ]]; then
-            # expected file is same file name rpm just with tar.xz extention
-            # if needed use the fileranme option for the source.
-            local TMP_RPM_XZ_FILE="$SRC/${FINAL_SRCNAME%.*}.tar.xz"
-            if [[ -f "$TMP_RPM_XZ_FILE" ]]; then
-                bsdtar -p -C "$SRC" -xf "$TMP_RPM_XZ_FILE" || ret=$?
-            fi
-        fi
+    msg_i "$(gettext "Extracting file with (%s): <%s>")" "$CMD" "$FINAL_SRCPATH"
+	if [[ $CMD == "bsdtar" ]]; then
+		$CMD -p -C "$SRC" -xf "$FINAL_SRCPATH" || ret=$?
 	else
 		rm -f -- "$SRC/${FINAL_SRCNAME%.*}"
-		$cmd -dcf "$FINAL_SRCPATH" > "$SRC/${FINAL_SRCNAME%.*}" || ret=$?
+		$CMD -dcf "$FINAL_SRCPATH" > "$SRC/${FINAL_SRCNAME%.*}" || ret=$?
 	fi
 	if (( ret )); then
         abort_check_keepwork "Failed to extract file: <$FINAL_SRCPATH>. SOURCE: <$NETSRC>"
@@ -1025,9 +931,9 @@ extract_file() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   GIT - function for handling the *extraction* of `Git` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_git() {
 	local NETSRC=$1
@@ -1037,29 +943,29 @@ extract_git() {
 		unset FRAGMENT
 	fi
 
-	local REPO=${NETSRC##*/}
+	local REPO=$(get_basename $NETSRC)
 	REPO=${REPO%%#*}
 	REPO=${REPO%%.git*}
 
 	local dir=$(getchecked_final_srcpath "$NETSRC")
 	[[ -z "$dir" ]] && dir="$PKGMK_SOURCE_DIR/$(get_final_srcname "$NETSRC")"
 
-    msg2 "$(gettext "Creating working copy of git repo <%s>")" "$REPO"
+    msg_i "$(gettext "Creating working copy of git repo <%s>")" "$REPO"
 	pushd "$SRC" &>/dev/null
 
 	local updating=0
-	if [[ -d "${dir##*/}" ]]; then
+	if [[ -d "$(get_basename $dir)" ]]; then
 		updating=1
-		cd_safe "${dir##*/}"
+		cd_safe "$(get_basename $dir)"
 		if ! git fetch; then
             abort_check_keepwork "Failure while updating working copy of git repo <$REPO>"
 		fi
 		cd_safe "$SRC"
-	elif ! git clone "$dir" "${dir##*/}"; then
+	elif ! git clone "$dir" "$(get_basename $dir)"; then
         abort_check_keepwork "Failure while creating working copy of git repo <$REPO>"
 	fi
 
-	cd_safe "${dir##*/}"
+	cd_safe "$(get_basename $dir)"
 
 	local ref=origin/HEAD
 	if [[ -n "$FRAGMENT" ]]; then
@@ -1085,9 +991,9 @@ extract_git() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   SVN - function for handling the *extraction* of `Subversion` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_svn() {
 	local NETSRC=$1
@@ -1095,10 +1001,10 @@ extract_svn() {
 	local dir=$(getchecked_final_srcpath "$NETSRC")
 	[[ -z "$dir" ]] && dir="$PKGMK_SOURCE_DIR/$(get_final_srcname "$NETSRC")"
 
-	local repo=${NETSRC##*/}
+	local repo=$(get_basename $NETSRC)
 	REPO=${repo%%#*}
 
-    msg2 "$(gettext "Creating working copy of svn repo <%s>")" "$REPO"
+    msg_i "$(gettext "Creating working copy of svn repo <%s>")" "$REPO"
     local ret=1
 	cp -au "$dir" "$SRC"
     ret=$?
@@ -1108,9 +1014,9 @@ extract_svn() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   HG - function for handling the *extraction* of `Mercurial` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_hg() {
 	local NETSRC=$1
@@ -1123,10 +1029,10 @@ extract_hg() {
 	local dir=$(getchecked_final_srcpath "$NETSRC")
 	[[ -z "$dir" ]] && dir="$PKGMK_SOURCE_DIR/$(get_final_srcname "$NETSRC")"
 
-	local REPO=${NETSRC##*/}
+	local REPO=$(get_basename $NETSRC)
 	REPO=${REPO%%#*}
 
-    msg2 "$(gettext "Creating working copy of hg repo <%s>")" "$REPO"
+    msg_i "$(gettext "Creating working copy of hg repo <%s>")" "$REPO"
 	pushd "$SRC" &>/dev/null
 
 	local ref=tip
@@ -1140,12 +1046,12 @@ extract_hg() {
 		esac
 	fi
 
-	if [[ -d "${dir##*/}" ]]; then
-		cd_safe "${dir##*/}"
+	if [[ -d "$(get_basename $dir)" ]]; then
+		cd_safe "$(get_basename $dir)"
 		if ! (hg pull && hg update -C -r "$ref"); then
 			abort_check_keepwork "Failure while updating working copy of hg repo <$REPO>"
 		fi
-	elif ! hg clone -u "$ref" "$dir" "${dir##*/}"; then
+	elif ! hg clone -u "$ref" "$dir" "$(get_basename $dir)"; then
 		abort_check_keepwork "Failure while creating working copy of hg repo <$REPO>"
 	fi
 
@@ -1153,9 +1059,9 @@ extract_hg() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   BZR - function for handling the *extraction* of `Bazaar` sources
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 extract_bzr() {
 	local NETSRC=$1
@@ -1180,11 +1086,11 @@ extract_bzr() {
 	local dir=$(getchecked_final_srcpath "$NETSRC")
 	[[ -z "$dir" ]] && dir="$PKGMK_SOURCE_DIR/$(get_final_srcname "$NETSRC")"
 
-    msg2 "$(gettext "Creating working copy of bzr repo <%s>")" "$REPO"
+    msg_i "$(gettext "Creating working copy of bzr repo <%s>")" "$REPO"
 	pushd "$SRC" &>/dev/null
 
-	if [[ -d "${dir##*/}" ]]; then
-		cd_safe "${dir##*/}"
+	if [[ -d "$(get_basename $dir)" ]]; then
+		cd_safe "$(get_basename $dir)"
 		if ! (bzr pull "$dir" -q --overwrite -r "$rev" && bzr clean-tree -q --detritus --force); then
             abort_check_keepwork "Failure while updating working copy of bzr repo <$REPO>"
 		fi
@@ -1196,11 +1102,11 @@ extract_bzr() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   PKGFILE VERSION FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 # return: full version spec, including version, version
 get_full_version() {
@@ -1235,8 +1141,8 @@ update_pkgver() {
 
             # TODO: Decide if we should keep that or just update the version variable with the new one.
 			source_safe "$BUILDFILE"
-			msg2 "$(gettext "Updated 'Pkgfile version' from: <%s> to <%s>")" "$version" "$NEW_VERSION"
-            msg2 "$(gettext "Full version is now: <%s>")" "$(get_full_version)"
+			msg_i "$(gettext "Updated 'Pkgfile version' from: <%s> to <%s>")" "$version" "$NEW_VERSION"
+            msg_i "$(gettext "Full version is now: <%s>")" "$(get_full_version)"
 		else
 			warning "$(gettext "<%s> is not writeable -- version will not be updated")" "$BUILDFILE"
 		fi
@@ -1244,15 +1150,15 @@ update_pkgver() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   PACKAGE FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   COMPRESSION  - package functions
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 compress_archive() {
     plain "$(gettext "Using (%s) to compress <%s>")" "$PKGMK_COMPRESSION_MODE" "$1"
@@ -1277,7 +1183,7 @@ compress_manpages() {
 
 	find . -type l -path "*/share/man*/*" | while read FILE; do
 		TARGET="$(readlink -n "$FILE")"
-		TARGET="${TARGET##*/}"
+		TARGET=$(get_basename $TARGET)
 		TARGET="${TARGET%%.gz}.gz"
 		rm -f "$FILE"
 		FILE="${FILE%%.gz}.gz"
@@ -1294,7 +1200,7 @@ compress_manpages() {
 	done
 	find . -type l -path "*/share/info/*" | while read FILE; do
 		TARGET="$(readlink -n "$FILE")"
-		TARGET="${TARGET##*/}"
+		TARGET=$(get_basename $TARGET)
 		TARGET="${TARGET%%.gz}.gz"
 		rm -f "$FILE"
 		FILE="${FILE%%.gz}.gz"
@@ -1307,9 +1213,9 @@ compress_manpages() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   PACKAGE PACK/REMOVE functions: lib, devel, doc, man, service
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 pack_lib() {
 	local DIR SUBDIR
@@ -1439,9 +1345,9 @@ remove_service() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   GENERAL - package functions
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 get_pkgfile_variables() {
 	local STRING KEY VALUE
@@ -1512,7 +1418,7 @@ get_package_name() {
 	else
 		EXT=$PKGMK_PACKAGE_EXT.$PKGMK_COMPRESSION_MODE
 	fi
-	NAME=$(echo $1|sed "s/i686.$EXT//"|sed "s/x86_64.$EXT//"|sed "s/any.$EXT//")
+	NAME=$(echo $1|sed "s/$PKGMK_ARCH.$EXT//"|sed "s/any.$EXT//")
 
 	echo "${NAME:0:$((${#NAME} - 10 ))}"
 }
@@ -1524,8 +1430,8 @@ get_package_builddate() {
 	else
 		EXT=$PKGMK_PACKAGE_EXT.$PKGMK_COMPRESSION_MODE
 	fi
-	NAME="`get_package_name $1`"
-	BUILD_DATE=$(echo $1|sed "s/i686.$EXT//"|sed "s/x86_64.$EXT//"|sed "s/any.$EXT//")
+	NAME=$(get_package_name $1)
+    BUILD_DATE=$(echo $1|sed "s/$PKGMK_ARCH.$EXT//"|sed "s/any.$EXT//")
 	echo "${BUILD_DATE:$((${#NAME}))}"
 }
 
@@ -1550,7 +1456,7 @@ get_package_arch() {
 get_package_list() {
 	local ARCHFILE i
 	i=0
-	for ARCH in x86_64 i686 any; do
+	for ARCH in $PKGMK_ARCH any; do
 		for FILE in `find $PKGMK_PACKAGE_DIR -name "${name}*$ARCH.$PKGMK_PACKAGE_EXT*"`; do
 			TARGETS[i]=`basename $FILE`
 			i=$((i+1))
@@ -2064,11 +1970,11 @@ build_needed() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   REPO FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 update_collection_repo() {
 	local HEAD BUILD_DATE VERSION RELEASE DESCRIPTION URL MAINTAINER PACKAGER EXTENSION
@@ -2140,11 +2046,11 @@ clean_repo_files() {
 }
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
 #   MAIN FUNCTIONS
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 print_help() {
 	echo "usage: `basename $PKGMK_COMMAND` [options]"
@@ -2310,16 +2216,16 @@ main() {
 		exit 0
 	fi
     msg "$(gettext "Configuration settings...")"
-    msg2 "$(gettext "PKGMK_INSTALL:          %s")" "$PKGMK_INSTALL"
-    msg2 "$(gettext "PKGMK_WORK_DIR:         %s")" "$PKGMK_WORK_DIR"
-    msg2 "$(gettext "PKGMK_SOURCE_DIR:       %s")" "$PKGMK_SOURCE_DIR"
+    msg_i "$(gettext "PKGMK_INSTALL:          %s")" "$PKGMK_INSTALL"
+    msg_i "$(gettext "PKGMK_WORK_DIR:         %s")" "$PKGMK_WORK_DIR"
+    msg_i "$(gettext "PKGMK_SOURCE_DIR:       %s")" "$PKGMK_SOURCE_DIR"
 
 	if [ "$PKGMK_INSTALL" == "no" ]; then
 		PKGMK_CLEAN="no"
         warning "$(gettext "CLEAN IGNORED.")"
 	else
-        msg2 "$(gettext "PKGMK_KEEP_SOURCES:     %s")" "$PKGMK_KEEP_SOURCES"
-        msg2 "$(gettext "PKGMK_CLEAN:            %s")" "$PKGMK_CLEAN"
+        msg_i "$(gettext "PKGMK_KEEP_SOURCES:     %s")" "$PKGMK_KEEP_SOURCES"
+        msg_i "$(gettext "PKGMK_CLEAN:            %s")" "$PKGMK_CLEAN"
 	fi
 	if [ "$PKGMK_CLEAN" != "no" ]; then
 		PKGMK_IGNORE_FOOTPRINT="yes"
@@ -2327,35 +2233,35 @@ main() {
         warning "$(gettext "FOOTPRINT AND MD5SUM IGNORED.")"
 	else
 		if [ "$PKGMK_UPDATE_REPO" != "yes" ]; then
-            msg2 "$(gettext "PKGMK_IGNORE_REPO:      %s")" "$PKGMK_IGNORE_REPO"
+            msg_i "$(gettext "PKGMK_IGNORE_REPO:      %s")" "$PKGMK_IGNORE_REPO"
 		else
-            msg2 "$(gettext "PKGMK_UPDATE_REPO:      %s")" "$PKGMK_UPDATE_REPO"
+            msg_i "$(gettext "PKGMK_UPDATE_REPO:      %s")" "$PKGMK_UPDATE_REPO"
 		fi
-        msg2 "$(gettext "PKGMK_IGNORE_FOOTPRINT: %s")" "$PKGMK_IGNORE_FOOTPRINT"
-        msg2 "$(gettext "PKGMK_IGNORE_MD5SUM:    %s")" "$PKGMK_IGNORE_MD5SUM"
+        msg_i "$(gettext "PKGMK_IGNORE_FOOTPRINT: %s")" "$PKGMK_IGNORE_FOOTPRINT"
+        msg_i "$(gettext "PKGMK_IGNORE_MD5SUM:    %s")" "$PKGMK_IGNORE_MD5SUM"
 	fi
 	if [ "$PKGMK_IGNORE_REPO" == "yes" ]; then
         plain "$(gettext "<%s> file will be deleted.")" "$PKGMK_REPO"
 	fi
 
-    msg2 "$(gettext "PKGMK_COMPRESS_PACKAGE: %s")" "$PKGMK_COMPRESS_PACKAGE"
+    msg_i "$(gettext "PKGMK_COMPRESS_PACKAGE: %s")" "$PKGMK_COMPRESS_PACKAGE"
 	if [ "$PKGMK_COMPRESS_PACKAGE" != "no" ]; then
-        msg2 "$(gettext "PKGMK_COMPRESSION_MODE: %s")" "$PKGMK_COMPRESSION_MODE"
+        msg_i "$(gettext "PKGMK_COMPRESSION_MODE: %s")" "$PKGMK_COMPRESSION_MODE"
         if [ -n "$PKGMK_COMPRESSION_OPTS" ]; then
-            msg2 "$(gettext "PKGMK_COMPRESSION_OPTS: %s")" "$PKGMK_COMPRESSION_OPTS"
+            msg_i "$(gettext "PKGMK_COMPRESSION_OPTS: %s")" "$PKGMK_COMPRESSION_OPTS"
         fi
 	fi
 
     msg "$(gettext "Package info...")"
-    msg2 "$(gettext "name:    %s")" "$name"
+    msg_i "$(gettext "name:    %s")" "$name"
 	if [ ! -z "$version" ]; then
-        msg2 "$(gettext "version: %s")" "$version"
+        msg_i "$(gettext "version: %s")" "$version"
 	fi
 	if [ ! -z "$release" ]; then
-        msg2 "$(gettext "release: %s")" "$release"
+        msg_i "$(gettext "release: %s")" "$release"
 	fi
 	if [ ! -z "$group" ]; then
-        msg2 "$(gettext "group:   %s")" "$group"
+        msg_i "$(gettext "group:   %s")" "$group"
 	fi
 	check_directory "$PKGMK_SOURCE_DIR"
 	check_directory "$PKGMK_PACKAGE_DIR"
@@ -2512,25 +2418,47 @@ main() {
 	exit 0
 }
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #
-#   DIVERSES
+#   SOURCE COMMON_FUNC.SH
 #
-#**********************************************************************************************************************
+#       See also th sourced file: `common_func.sh`
+#
+#************************************************************************************************************************
 
+if [ -z "$BASH" ]; then printf "\nERROR SHELL: '%s' SCRIPT needs 'bash'\n\n" "$(ps -p $$ -ocomm=)"; exit 1; fi
+THIS_SCRIPT_PATH="$(readlink -f "$(type -P $0 || echo $0)")"
+THIS_SCRIPT_DIR="$(dirname "$THIS_SCRIPT_PATH")"
+source $THIS_SCRIPT_DIR/p_linux_common_func.sh
 trap "interrupted" SIGHUP SIGINT SIGQUIT SIGTERM
+msg_format
+check_have_gettext  $THIS_SCRIPT_PATH
 
-export LC_ALL=POSIX
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
+#   OVERRIDING SOURCED Functions
+#************************************************************************************************************************
+
+interrupted() {
+	if [ "$PKGMK_KEEP_WORK" == "no" ]; then
+		rm -rf $PKGMK_WORK_DIR
+	fi
+    printf "${RED_MSG}\n======> $(gettext "ERROR:")${ALL_OFF_MSG}${BOLD_MSG} Interrupted${ALL_OFF_MSG}\n" >&2
+	exit 1
+}
+
+#************************************************************************************************************************
 #
 #   VARIABLES
 #
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
-#**********************************************************************************************************************
-#   READ-ONLY VARIABLES
-#**********************************************************************************************************************
+export LC_ALL=POSIX
+
+
+#************************************************************************************************************************
+#   PKGMK READ-ONLY VARIABLES
+#************************************************************************************************************************
 
 readonly PKGMK_VERSION="#VERSION#"
 readonly PKGMK_COMMAND="$0"
@@ -2543,9 +2471,9 @@ readonly PKGMK_MD5SUM="$name.`uname -m`.md5sum"
 readonly PKGMK_NOSTRIP=".nostrip"
 readonly PKGMK_ARCH="$(uname -m)"
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   PKGMK.CONF VARIABLES: which can be set in the `pkgmk.conf`
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
 # DOWNLOAD SOURCES
 PKGMK_DOWNLOAD_ONLY="no"
@@ -2568,8 +2496,8 @@ PKGMK_COMPRESSION_OPTS="-9"
 PKGMK_GROUPS=()
 PKGMK_LOCALES=(fr)
 PKGMK_SOURCE_MIRRORS=()
-PKGMK_SOURCE_DIR="$PWD"
-PKGMK_WORK_DIR="$PWD/work"
+PKGMK_SOURCE_DIR="$PKGMK_ROOT"
+PKGMK_WORK_DIR="$PKGMK_ROOT/work"
 PKGMK_DOWNLOAD="no"
 PKGMK_IGNORE_FOOTPRINT="yes"
 PKGMK_IGNORE_NEW="yes"
@@ -2587,9 +2515,9 @@ PKGMK_UPDATE_FOOTPRINT="no"
 PKGMK_FORCE="no"
 PKGMK_KEEP_WORK="no"
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 #   PKGMK INTERNAL VARIABLES: which should not be set in the `pkgmk.conf`
-#**********************************************************************************************************************
+#************************************************************************************************************************
 PKGMK_CONFFILE="/etc/pkgmk.conf"
 PKGMK_PKGFILE="Pkgfile"
 PKGMK_INSTALL="no"
@@ -2599,9 +2527,8 @@ PKGMK_CHECK_MD5SUM="no"
 PKGMK_SPIT="no"
 
 
-#**********************************************************************************************************************
+#************************************************************************************************************************
 
-colorize
 main "$@"
 
 # End of file
