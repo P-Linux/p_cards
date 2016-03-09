@@ -1,24 +1,31 @@
 site_name: p_cards
-site_url: https://p-nutyx.github.io/p_cards/
-site_description: Package Management Utilities for NuTyX-Linux (development repo of peter1000)
+site_url: https://p-linux.github.io/p_cards/
+site_description: The Package Management Utilities of P-Linux
 site_author: peter1000
-#site_favicon: images/p_cards_favicon.ico
+site_favicon: images/p_linux_favicon.ico
 
-repo_url: https://github.com/P-NuTyX/p_cards/
+repo_url: https://github.com/P-Linux/p_cards/
 
 pages:
 - Home: 'index.md'
 - Utilities:
     - Cards: utilities/cards.md
-    - Cards.conf: utilities/cards.conf.md
-    - Pkgmk.conf: utilities/pkgmk.conf
-    - Pkgadd.conf: utilities/pkgadd.conf
+    - Cards.conf: utilities/cards_conf.md
+    - Pkgmk.conf: utilities/pkgmk_conf.md
+    - Pkgadd.conf: utilities/pkgadd_conf.md
 - About:
     - Readme: about/readme.md
     - License: about/license.md
-    - Changelog: about/changelog.md
+    - Release Notes: about/release-notes.md
+
+markdown_extensions:
+    - toc:
+        permalink: 
+    - admonition:
+
+extra_css: [css/extra.css]
 
 use_directory_urls: true
-copyright: Copyright (c) 2016, <strong>peter1000</strong> <a href="https://github.com/peter1000">https://github.com/peter1000</a> plus contributors.
+copyright: Copyright (c) 2016, <strong>peter1000</strong> <a href="https://github.com/peter1000">https://github.com/peter1000</a> and contributors.
 
 theme: 'bootstrap'

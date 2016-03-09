@@ -207,7 +207,7 @@ void Pkgdbh::progressInfo() const
 			break;
     case PKG_INSTALL_START:
       j = 0;
-      cout << "ADD    : "
+      cout << "ADD   : "
 				<< m_packageName
 				<< " "
 				<< m_packageArchiveVersion
