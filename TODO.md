@@ -1,11 +1,15 @@
-## TODO
+# TODO
 
-### Add extraction support for: debian dep files
+
+---
+
+
+## Add extraction support for: debian dep files
 
 see http://downloads.nutyx.org/8.0/x86_64/gui-extra/google-chrome/Pkgfile
 
 
-### pkgmk.in supports now gettext translation files
+## pkgmk.in supports now gettext translation files
 
 * Need to translate them
 * Decide where final PO files should be installed and add: `TEXTDOMAIN`, `TEXTDOMAINDIR`
@@ -16,7 +20,10 @@ Maybe suggestion:
     * export TEXTDOMAINDIR='/etc/cards/pkgmk/locale'
 
 
-### Add documentation / man page info for PKGMK variables
+IMPORTANT: a good number of messages still need to be changed to gettext
+
+
+## Add documentation / man page info for PKGMK variables
 
 Add documentation / man page info for ALL PKGMK options.
 
@@ -30,12 +37,12 @@ Split them into 2 categories:
         official Pkgfiles.
 
 
-### Unify code style in `pkgmk.in`: backticks to parentheses style
+## Unify code style in `pkgmk.in`: backticks to parentheses style
 
 Change all backticks to parentheses style [see](http://mywiki.wooledge.org/BashFAQ/082)
 
 
-### Unify code style in `pkgmk.in`: Quoting Variables
+## Unify code style in `pkgmk.in`: Quoting Variables
 
 Prefer quoted variables over unquoted. [see Quoting Variables](http://www.tldp.org/LDP/abs/html/quotingvar.html)
 
@@ -45,16 +52,20 @@ This prevents  reinterpretation of all special characters within the
 quoted string -- except $, ` (backquote), and \ (escape).
 ```
 
+## Unify code style in `pkgmk.in`: Double brackets
 
-### Re-write Documentation
+[see](http://mywiki.wooledge.org/BashFAQ/031)
+
+
+## Re-write Documentation
 
 * `pkgmk.in` rewrite info *Pkgfile: source (array)* (the big block at the top of the file)
     in the documentation and remove it from the `pkgmk.in` file
     
 
-### CHECK: PKGMK.CONF VARIABLES: which can be set in the `pkgmk.conf`
+## CHECK: PKGMK.CONF VARIABLES: which can be set in the `pkgmk.conf`
 
 
-### DIVERSE TODO
+## DIVERSE TODO
 
 * Maybe: add Pkgfile syntax check for source=() array
